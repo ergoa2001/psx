@@ -16,7 +16,8 @@ class dma:
         self.control = value
 
     def irq(self):
-        return 1 if (self.force_irq or (self.irq_en and (self.channel_irq_flags & self.channel_irq_en))) else 0
+        temp = self.channel_irq_flags & self.channel_irq_en
+        return 1 if (self.force_irq or (self.irq_en and temp)) else 0
 
     def channel(self, port):
         return self.channels[port]
@@ -36,4 +37,5 @@ class dma:
         self.force_irq = (value >> 15) & 1
         self.channel_irq_en = (value >> 16) & 0x7F
         self.irq_en = (value >> 23) & 1
-        self.channel_irq_flags &= ~((value >> 24) & 0x3F)
+        temp = (value >> 24) & 0x3F
+        self.channel_irq_flags &= ~temp

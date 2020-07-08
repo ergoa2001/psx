@@ -1,9 +1,13 @@
 class ram:
     def __init__(self):
-        self.data = [0xca]*2*1024*1024
+        self.data = [0xca]*2*1024*1024 #0xca 
 
     def load32(self, offset):
-        return self.data[offset + 0] | (self.data[offset + 1] << 8) | (self.data[offset + 2] << 16) | (self.data[offset + 3] << 24)
+        b0 = self.data[offset + 0]
+        b1 = self.data[offset + 1]
+        b2 = self.data[offset + 2]
+        b3 = self.data[offset + 3]
+        return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)
 
     def load16(self, offset):
         return self.data[offset + 0] | (self.data[offset + 1] << 8)

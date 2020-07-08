@@ -111,6 +111,7 @@ class gpu:
                 self.gp0_words_remaining = 1
                 self.gp0_command_method = self.gp0_nop
                 print("UNHANDLED GP0 COMMAND", hex(value))
+                #quit()
             self.gp0_clear()
         self.gp0_words_remaining -= 1
         if self.gp0_mode == 0:
@@ -161,11 +162,11 @@ class gpu:
         print("DRAWING QUAD")
 
     def gp0_quad_texture_blend_opaque(self):
-        #print(self.gp0_command)
-        #positions = [self.renderer.position_from_gp0(self.gp0_command[1]), self.renderer.position_from_gp0(self.gp0_command[3]), self.renderer.position_from_gp0(self.gp0_command[5]), self.renderer.position_from_gp0(self.gp0_command[7])]
-        #colors = [(0x80, 0x00, 0x00), (0x80, 0x00, 0x00), (0x80, 0x00, 0x00), (0x80, 0x00, 0x00)]
-        #self.renderer.push_quad(positions, colors)
-        #print(positions, colors)
+        print(self.gp0_command)
+        positions = [self.renderer.position_from_gp0(self.gp0_command[1]), self.renderer.position_from_gp0(self.gp0_command[3]), self.renderer.position_from_gp0(self.gp0_command[5]), self.renderer.position_from_gp0(self.gp0_command[7])]
+        colors = [(0x80, 0x00, 0x00), (0x80, 0x00, 0x00), (0x80, 0x00, 0x00), (0x80, 0x00, 0x00)]
+        self.renderer.push_quad(positions, colors)
+        print(positions, colors)
         print("DRAW QUAD TEXTURE BLENDING")
 
     def gp0_triangle_shaded_opaque(self):
@@ -178,11 +179,11 @@ class gpu:
 
 
     def gp0_quad_shaded_opaque(self):
-        #print(self.gp0_command)
-        #positions = [self.renderer.position_from_gp0(self.gp0_command[1]), self.renderer.position_from_gp0(self.gp0_command[3]), self.renderer.position_from_gp0(self.gp0_command[5]), self.renderer.position_from_gp0(self.gp0_command[7])]
-        #colors = [self.renderer.color_from_gp0(self.gp0_command[0]), self.renderer.color_from_gp0(self.gp0_command[2]), self.renderer.color_from_gp0(self.gp0_command[4]), self.renderer.color_from_gp0(self.gp0_command[6])]
-        #self.renderer.push_quad(positions, colors)
-        #print(positions, colors)
+        print(self.gp0_command)
+        positions = [self.renderer.position_from_gp0(self.gp0_command[1]), self.renderer.position_from_gp0(self.gp0_command[3]), self.renderer.position_from_gp0(self.gp0_command[5]), self.renderer.position_from_gp0(self.gp0_command[7])]
+        colors = [self.renderer.color_from_gp0(self.gp0_command[0]), self.renderer.color_from_gp0(self.gp0_command[2]), self.renderer.color_from_gp0(self.gp0_command[4]), self.renderer.color_from_gp0(self.gp0_command[6])]
+        self.renderer.push_quad(positions, colors)
+        print(positions, colors)
         print("DRAW QUAD SHADED")
 
     def gp0_image_load(self):

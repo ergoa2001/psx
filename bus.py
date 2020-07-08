@@ -10,6 +10,7 @@ class bus:
         self.data = bytearray(data)
         self.dma = dma()
         self.gpu = gpu()
+        self.debug = False
         self.cpu = cpu(self, self.data)
         self.ramrange = (0x00000000, 2*1024*1024)
         self.expansion1 = (0x1F000000, 512*1024)
@@ -30,6 +31,7 @@ class bus:
         self.renderer = renderer()
         self.gpu.link_bus_renderer(self, self.renderer)
         self.renderer.link_bus(self)
+
 
 
 
@@ -57,8 +59,9 @@ class bus:
                 return channel.block_control()
             elif minor == 8:
                 return channel.control()
-            print("UNHANDLED DMA READ AT", hex(offset))
-            return
+            else:
+                print("UNHANDLED DMA READ AT", hex(offset))
+                return
         elif major == 7:
             if minor == 0:
                 return self.dma.control
@@ -84,6 +87,8 @@ class bus:
                 print("UNHANDLED DMA WRITE", hex(offset), hex(value))
             if channel.active():
                 active_port = major
+            else:
+                active_port = None
         elif major == 7:
             if minor == 0:
                 self.dma.set_control(value)
@@ -103,12 +108,18 @@ class bus:
     def do_dma_linked_list(self, port):
         channel = self.dma.channel(port)
         addr = channel.base & 0x1FFFFC
+        print("DMA" + str(port), "chcr=" + str(hex(channel.control())), "madr=" + str(hex(channel.base)), "bcr=")
         if channel.direction == 0:
             print("INVALID DMA DIRECTION FOR LINKED LIST MODE")
+            quit()
+        else:
+            print("LINKED LIST", hex(addr), port, "FromRam")
         if port != 2:
             print("ATTEMPTED LINKED LIST DMA ON PORT", port)
+            quit()
 
-        while True:
+        doingdma = True
+        while doingdma:
             header = self.ram.load32(addr)
             remsz = header >> 24
             while remsz > 0:
@@ -116,8 +127,8 @@ class bus:
                 command = self.ram.load32(addr)
                 self.gpu.gp0(command)
                 remsz -= 1
-            if header & 0x800000 != 0:
-                break
+            if header & 0x800000:
+                doingdma = False
             addr = header & 0x1FFFFC
         channel.done()
 
@@ -126,15 +137,11 @@ class bus:
         increment = 4 if (channel.step == 0) else -4
         addr = channel.base
         remsz = channel.transfer_size()
+        print("DMA" + str(port), "chcr=" + str(hex(channel.control())), "madr=" + str(hex(channel.base)), "bcr=")
+        print("BLOCK", hex(addr), remsz, port, "ToRam" if (channel.direction == 0) else "FromRam")
         while remsz > 0:
             cur_addr = addr & 0x1FFFFC
-            if channel.direction == 1:
-                src_word = self.ram.load32(cur_addr)
-                if port == 2:
-                    self.gpu.gp0(src_word)
-                else:
-                    print("UNHANDLED DMA DESTINATION PORT", hex(port))
-            else:
+            if channel.direction == 0: #1
                 if port == 6:
                     if remsz == 1:
                         src_word = 0xFFFFFF
@@ -142,7 +149,14 @@ class bus:
                         src_word = ((addr - 4) & 0xFFFFFFFF) & 0x1FFFFF
                 else:
                     print("UNHANDLED DMA SOURCE PORT", hex(port))
+                    quit()
                 self.ram.store32(cur_addr, src_word)
+            else:
+                src_word = self.ram.load32(cur_addr)
+                if port == 2:
+                    self.gpu.gp0(src_word)
+                else:
+                    print("UNHANDLED DMA DESTINATION PORT", hex(port))
             addr = (addr + increment) & 0xFFFFFFFF
             remsz -= 1
         channel.done()
@@ -171,7 +185,7 @@ class bus:
             if offset == 0:
                 return self.gpu.read()
             elif offset == 4:
-                return 0x1c000000
+                return 0x1C000000
             else:
                 return 0
         elif self.map_addr(addr_abs, self.timerrange) != None:
@@ -210,6 +224,7 @@ class bus:
 
     def store32(self, addr, value):
         addr_abs = self.mask_region(addr)
+        value &= 0xFFFFFFFF
         if addr_abs % 4 != 0:
             print("UNALIGNED STORE32 ADDRESS", hex(addr_abs))
             return
@@ -246,6 +261,8 @@ class bus:
             offset = self.map_addr(addr_abs, self.gpurange)
             if offset == 0:
                 self.gpu.gp0(value)
+                if value == 0xe5000800:
+                    self.debug = True
             elif offset == 4:
                 self.gpu.gp1(value)
             else:
@@ -264,9 +281,10 @@ class bus:
             print("UNALIGNED STORE16 ADDRESS", hex(addr))
             return
         addr_abs = self.mask_region(addr)
+        #value &= 0xFFFF
         if self.map_addr(addr_abs, self.spurange) != None:
             offset = self.map_addr(addr_abs, self.spurange)
-            print("UNHANDLED WRITE TO SPU REGISTER", hex(addr_abs))
+            print("UNHANDLED WRITE TO SPU REGISTER", hex(addr))
             return
         elif self.map_addr(addr_abs, self.timerrange) != None:
             offset = self.map_addr(addr_abs, self.timerrange)
@@ -291,5 +309,6 @@ class bus:
             return
         elif self.map_addr(addr_abs, self.ramrange) != None:
             offset = self.map_addr(addr_abs, self.ramrange)
-            return self.ram.store8(offset, value)
+            self.ram.store8(offset, value)
+            return
         print("UNHANDLED STORE8 INTO ADDRESS", hex(addr_abs))

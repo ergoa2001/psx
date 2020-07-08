@@ -10,4 +10,4 @@ class bios:
         return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24)
 
     def load8(self, offset):
-        return self.data[offset]
+        return self.data[offset] & 0xFF

@@ -19,7 +19,8 @@ class channel:
             return self.block_size
         elif self.sync == 1:
             return self.block_count * self.block_size
-        return 0
+        else:
+            return 0
 
     def done(self):
         self.enable = 0

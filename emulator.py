@@ -16,5 +16,5 @@ with open(filename, "rb") as fp:
         print("INVALID BIOS size")
 
 bus = bus(data)
-#while bus.cpu.running:
-#    bus.clock()
+while bus.cpu.running:
+    bus.clock()
